@@ -17,11 +17,17 @@ export const AuthProvider = ({ children }) => {
         const saved = await AsyncStorage.getItem(STORAGE_KEY);
         if (saved) {
           const session = JSON.parse(saved);
-          setUser(session.user);
-          setToken(session.token);
+          if (session.token) {
+            const freshUser = await api.me(session.token);
+            const nextSession = { ...session, user: freshUser };
+            setUser(nextSession.user);
+            setToken(nextSession.token);
+            await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(nextSession));
+          }
         }
       } catch (error) {
-        Alert.alert("Session", "Could not restore your saved session.");
+        await AsyncStorage.removeItem(STORAGE_KEY);
+        Alert.alert("Session expired", "Please log in again.");
       } finally {
         setLoading(false);
       }

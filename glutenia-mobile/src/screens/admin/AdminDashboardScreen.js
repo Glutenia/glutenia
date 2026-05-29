@@ -9,7 +9,7 @@ import { api } from "../../api/client";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 
 export default function AdminDashboardScreen({ navigation }) {
-  const { token } = useAuth();
+  const { token, logout } = useAuth();
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -24,7 +24,13 @@ export default function AdminDashboardScreen({ navigation }) {
       setProducts(nextProducts);
       setOrders(nextOrders);
     } catch (error) {
-      Alert.alert("Dashboard", error.message);
+      if (error.status === 401) {
+        Alert.alert("Session expired", "Please log in as admin again.", [
+          { text: "OK", onPress: logout },
+        ]);
+      } else {
+        Alert.alert("Dashboard", error.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -33,7 +39,7 @@ export default function AdminDashboardScreen({ navigation }) {
   useFocusEffect(
     useCallback(() => {
       load();
-    }, [])
+    }, [token])
   );
 
   const revenue = orders.reduce((sum, order) => sum + order.total, 0);

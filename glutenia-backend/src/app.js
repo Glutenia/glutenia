@@ -31,7 +31,7 @@ const buildCorsOptions = () => {
 const app = express();
 
 app.use(cors(buildCorsOptions()));
-app.use(express.json());
+app.use(express.json({ limit: "8mb" }));
 
 app.get("/", (req, res) => {
   res.json({

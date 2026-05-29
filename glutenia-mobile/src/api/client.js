@@ -61,7 +61,9 @@ const request = async (path, options = {}) => {
   }));
 
   if (!response.ok || payload.success === false) {
-    throw new Error(payload.message || "Request failed");
+    const error = new Error(payload.message || "Request failed");
+    error.status = response.status;
+    throw error;
   }
 
   return payload.data;

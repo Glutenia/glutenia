@@ -1,9 +1,11 @@
 import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 import { useEffect, useState } from "react";
+import * as ImagePicker from "expo-image-picker";
 import Screen from "../../components/Screen";
 import SectionHeader from "../../components/SectionHeader";
 import Field from "../../components/Field";
-import { IconButton, PrimaryButton } from "../../components/Buttons";
+import ProductVisual from "../../components/ProductVisual";
+import { IconButton, PrimaryButton, SecondaryButton } from "../../components/Buttons";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
 import { Colors, Radius, Spacing } from "../../theme/colors";
@@ -80,6 +82,35 @@ export default function AdminProductFormScreen({ navigation, route }) {
     }
   };
 
+  const pickImage = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert("Photos", "Allow photo access to upload a product image.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+      aspect: [4, 3],
+      base64: true,
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.45,
+    });
+
+    if (result.canceled) {
+      return;
+    }
+
+    const asset = result.assets?.[0];
+    if (!asset?.base64) {
+      Alert.alert("Image", "Could not read this image. Try another photo.");
+      return;
+    }
+
+    const mimeType = asset.mimeType || "image/jpeg";
+    setImageUrl(`data:${mimeType};base64,${asset.base64}`);
+  };
+
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.container}>
@@ -132,7 +163,28 @@ export default function AdminProductFormScreen({ navigation, route }) {
             ))}
           </View>
         </View>
-        <Field label="Image URL" value={imageUrl} onChangeText={setImageUrl} />
+        <View style={styles.imageSection}>
+          <Text style={styles.label}>Product image</Text>
+          <View style={styles.imagePreview}>
+            <ProductVisual product={{ imageUrl, category }} size="large" />
+          </View>
+          <View style={styles.imageActions}>
+            <SecondaryButton
+              title={imageUrl ? "Replace image" : "Upload image"}
+              icon="image"
+              onPress={pickImage}
+              style={styles.imageAction}
+            />
+            {imageUrl ? (
+              <SecondaryButton
+                title="Remove"
+                icon="trash"
+                onPress={() => setImageUrl("")}
+                style={styles.imageAction}
+              />
+            ) : null}
+          </View>
+        </View>
         <View style={styles.switchCard}>
           <View>
             <Text style={styles.switchTitle}>Gluten Free Certified</Text>
@@ -199,6 +251,19 @@ const styles = StyleSheet.create({
   },
   categoryTextActive: {
     color: Colors.surface,
+  },
+  imageSection: {
+    gap: 8,
+  },
+  imagePreview: {
+    overflow: "hidden",
+  },
+  imageActions: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  imageAction: {
+    flex: 1,
   },
   switchCard: {
     borderRadius: Radius.md,

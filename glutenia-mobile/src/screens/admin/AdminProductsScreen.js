@@ -11,7 +11,7 @@ import { api } from "../../api/client";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 
 export default function AdminProductsScreen({ navigation }) {
-  const { token } = useAuth();
+  const { token, logout } = useAuth();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -20,7 +20,13 @@ export default function AdminProductsScreen({ navigation }) {
       setLoading(true);
       setProducts(await api.products());
     } catch (error) {
-      Alert.alert("Products", error.message);
+      if (error.status === 401) {
+        Alert.alert("Session expired", "Please log in as admin again.", [
+          { text: "OK", onPress: logout },
+        ]);
+      } else {
+        Alert.alert("Products", error.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -29,7 +35,7 @@ export default function AdminProductsScreen({ navigation }) {
   useFocusEffect(
     useCallback(() => {
       loadProducts();
-    }, [])
+    }, [token])
   );
 
   const deleteProduct = (product) => {
@@ -87,15 +93,17 @@ export default function AdminProductsScreen({ navigation }) {
               </View>
               <View style={styles.actions}>
                 <Pressable
-                  style={styles.smallButton}
+                  style={styles.actionButton}
                   onPress={() =>
                     navigation.navigate("AdminProductForm", { productId: item._id })
                   }
                 >
                   <Ionicons name="pencil" size={18} color={Colors.primary} />
+                  <Text style={styles.actionText}>Edit</Text>
                 </Pressable>
-                <Pressable style={styles.smallButton} onPress={() => deleteProduct(item)}>
+                <Pressable style={styles.actionButton} onPress={() => deleteProduct(item)}>
                   <Ionicons name="trash" size={18} color={Colors.danger} />
+                  <Text style={[styles.actionText, styles.deleteText]}>Delete</Text>
                 </Pressable>
               </View>
             </View>
@@ -157,12 +165,23 @@ const styles = StyleSheet.create({
   actions: {
     gap: 8,
   },
-  smallButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+  actionButton: {
+    minWidth: 74,
+    minHeight: 38,
+    borderRadius: Radius.pill,
     backgroundColor: Colors.primaryPale,
     alignItems: "center",
     justifyContent: "center",
+    flexDirection: "row",
+    gap: 5,
+    paddingHorizontal: 10,
+  },
+  actionText: {
+    color: Colors.primary,
+    fontSize: 12,
+    fontWeight: "900",
+  },
+  deleteText: {
+    color: Colors.danger,
   },
 });
