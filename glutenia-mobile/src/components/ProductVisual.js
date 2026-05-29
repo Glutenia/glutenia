@@ -1,4 +1,5 @@
 import { Image, StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from "react";
 import AppIcon from "./AppIcon";
 import { Colors, Radius } from "../theme/colors";
 
@@ -13,13 +14,20 @@ const iconByCategory = {
 
 export default function ProductVisual({ product, size = "card" }) {
   const isLarge = size === "large";
+  const [failed, setFailed] = useState(false);
+  const imageUrl = product?.imageUrl;
 
-  if (product?.imageUrl) {
+  useEffect(() => {
+    setFailed(false);
+  }, [imageUrl]);
+
+  if (imageUrl && !failed) {
     return (
       <Image
-        source={{ uri: product.imageUrl }}
+        source={{ uri: imageUrl }}
         style={[styles.image, isLarge && styles.large]}
         resizeMode="cover"
+        onError={() => setFailed(true)}
       />
     );
   }

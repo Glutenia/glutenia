@@ -1,69 +1,83 @@
-import { StyleSheet, Text } from "react-native";
+import {
+  ArrowLeft,
+  BadgeCheck,
+  Banknote,
+  Circle,
+  CircleCheck,
+  CirclePlus,
+  CircleX,
+  ClipboardList,
+  CreditCard,
+  Edit3,
+  Grid3X3,
+  Home,
+  ImagePlus,
+  Leaf,
+  List,
+  LogIn,
+  LogOut,
+  Minus,
+  Package,
+  Search,
+  ShoppingBasket,
+  Trash2,
+  User,
+  UserPlus,
+  Wheat,
+  X,
+} from "lucide-react-native";
 
-const symbols = {
-  add: "+",
-  "add-circle": "+",
-  "arrow-back": "<",
-  basket: "Cart",
-  card: "Pay",
-  cash: "$",
-  checkmark: "OK",
-  "checkmark-circle": "OK",
-  close: "x",
-  "close-circle": "x",
-  cube: "Prod",
-  ellipse: ".",
-  grid: "Dash",
-  home: "Home",
-  image: "Img",
-  leaf: "GF",
-  list: "=",
-  "log-in": ">",
-  "log-out": "<",
-  pencil: "Edit",
-  person: "User",
-  "person-add": "+User",
-  "person-circle": "User",
-  receipt: "Ord",
-  refresh: "R",
-  remove: "-",
-  save: "OK",
-  search: "Find",
-  trash: "Del",
-  "bread-slice": "Bread",
-  noodles: "Pasta",
-  "food-variant": "Snack",
-  sack: "Flour",
-  cupcake: "Sweet",
+const icons = {
+  add: CirclePlus,
+  "add-circle": CirclePlus,
+  "arrow-back": ArrowLeft,
+  basket: ShoppingBasket,
+  card: CreditCard,
+  cash: Banknote,
+  checkmark: CircleCheck,
+  "checkmark-circle": CircleCheck,
+  close: X,
+  "close-circle": CircleX,
+  cube: Package,
+  ellipse: Circle,
+  grid: Grid3X3,
+  home: Home,
+  image: ImagePlus,
+  leaf: Leaf,
+  list: List,
+  "log-in": LogIn,
+  "log-out": LogOut,
+  pencil: Edit3,
+  person: User,
+  "person-add": UserPlus,
+  "person-circle": User,
+  receipt: ClipboardList,
+  refresh: Circle,
+  remove: Minus,
+  save: BadgeCheck,
+  search: Search,
+  trash: Trash2,
+  "bread-slice": Wheat,
+  noodles: Package,
+  "food-variant": ShoppingBasket,
+  sack: Package,
+  cupcake: Circle,
 };
 
-export default function AppIcon({ name, size = 18, color = "#000", style }) {
-  const label = symbols[name] || ".";
-  const isWord = label.length > 1;
-
+export default function AppIcon({
+  name,
+  size = 18,
+  color = "#000",
+  strokeWidth = 2.4,
+  style,
+}) {
+  const Icon = icons[name] || Circle;
   return (
-    <Text
-      allowFontScaling={false}
-      style={[
-        styles.icon,
-        {
-          color,
-          fontSize: isWord ? Math.max(10, size * 0.52) : size,
-          minWidth: Math.max(size, isWord ? size * 1.8 : size),
-          lineHeight: Math.max(size, 18),
-        },
-        style,
-      ]}
-    >
-      {label}
-    </Text>
+    <Icon
+      color={color}
+      size={size}
+      strokeWidth={strokeWidth}
+      style={style}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  icon: {
-    fontWeight: "900",
-    textAlign: "center",
-    includeFontPadding: false,
-  },
-});

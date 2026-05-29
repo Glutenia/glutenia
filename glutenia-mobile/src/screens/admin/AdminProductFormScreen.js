@@ -114,7 +114,7 @@ export default function AdminProductFormScreen({ navigation, route }) {
       aspect: [4, 3],
       base64: true,
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.45,
+      quality: 0.35,
     });
 
     if (result.canceled) {
@@ -127,8 +127,7 @@ export default function AdminProductFormScreen({ navigation, route }) {
       return;
     }
 
-    const mimeType = asset.mimeType || "image/jpeg";
-    setImageUrl(`data:${mimeType};base64,${asset.base64}`);
+    setImageUrl(`data:image/jpeg;base64,${asset.base64}`);
   };
 
   return (
