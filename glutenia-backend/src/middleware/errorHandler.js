@@ -24,6 +24,11 @@ const errorHandler = (err, req, res, next) => {
     message = `${field} already exists`;
   }
 
+  if (err.code === "LIMIT_FILE_SIZE") {
+    statusCode = 413;
+    message = "Image is too large. Choose a smaller image.";
+  }
+
   res.status(statusCode).json({
     success: false,
     message,

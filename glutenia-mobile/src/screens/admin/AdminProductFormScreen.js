@@ -21,10 +21,13 @@ export default function AdminProductFormScreen({ navigation, route }) {
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("Bread");
   const [imageUrl, setImageUrl] = useState("");
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [removeImage, setRemoveImage] = useState(false);
   const [stock, setStock] = useState("0");
   const [isGlutenFree, setIsGlutenFree] = useState(true);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [imageProcessing, setImageProcessing] = useState(false);
 
   useEffect(() => {
     if (!productId) {
@@ -39,6 +42,8 @@ export default function AdminProductFormScreen({ navigation, route }) {
         setPrice(String(product.price));
         setCategory(product.category);
         setImageUrl(product.imageUrl || "");
+        setSelectedImage(null);
+        setRemoveImage(false);
         setStock(String(product.stock || 0));
         setIsGlutenFree(Boolean(product.isGlutenFree));
       } catch (error) {
@@ -84,15 +89,25 @@ export default function AdminProductFormScreen({ navigation, route }) {
         description,
         price: numericPrice,
         category,
-        imageUrl,
         stock: numericStock,
         isGlutenFree,
       };
 
-      if (productId) {
-        await api.updateProduct(token, productId, body);
-      } else {
-        await api.createProduct(token, body);
+      if (removeImage) {
+        body.imageUrl = "";
+      }
+
+      const savedProduct = productId
+        ? await api.updateProduct(token, productId, body)
+        : await api.createProduct(token, body);
+
+      if (selectedImage) {
+        const savedProductId = savedProduct?._id || productId;
+        if (!savedProductId) {
+          throw new Error("Product saved, but the server did not return its id.");
+        }
+
+        await api.uploadProductImage(token, savedProductId, selectedImage);
       }
 
       navigation.goBack();
@@ -128,24 +143,32 @@ export default function AdminProductFormScreen({ navigation, route }) {
     }
 
     try {
+      setImageProcessing(true);
       const image = await ImageManipulator.manipulateAsync(
         asset.uri,
         [{ resize: { width: 900 } }],
         {
-          base64: true,
           compress: 0.55,
           format: ImageManipulator.SaveFormat.JPEG,
         }
       );
 
-      if (!image.base64) {
+      if (!image.uri) {
         Alert.alert("Image", "Could not prepare this image. Try another photo.");
         return;
       }
 
-      setImageUrl(`data:image/jpeg;base64,${image.base64}`);
+      setSelectedImage({
+        uri: image.uri,
+        name: `${Date.now()}-product.jpg`,
+        type: "image/jpeg",
+      });
+      setRemoveImage(false);
+      setImageUrl(image.uri);
     } catch (error) {
       Alert.alert("Image", "Could not prepare this image. Try another photo.");
+    } finally {
+      setImageProcessing(false);
     }
   };
 
@@ -224,8 +247,15 @@ export default function AdminProductFormScreen({ navigation, route }) {
           </View>
           <View style={styles.imageActions}>
             <SecondaryButton
-              title={imageUrl ? "Replace image" : "Upload image"}
+              title={
+                imageProcessing
+                  ? "Preparing..."
+                  : imageUrl
+                    ? "Replace image"
+                    : "Upload image"
+              }
               icon="image"
+              disabled={imageProcessing || loading}
               onPress={pickImage}
               style={styles.imageAction}
             />
@@ -233,7 +263,12 @@ export default function AdminProductFormScreen({ navigation, route }) {
               <SecondaryButton
                 title="Remove"
                 icon="trash"
-                onPress={() => setImageUrl("")}
+                disabled={imageProcessing || loading}
+                onPress={() => {
+                  setImageUrl("");
+                  setSelectedImage(null);
+                  setRemoveImage(true);
+                }}
                 style={styles.imageAction}
               />
             ) : null}
@@ -254,7 +289,8 @@ export default function AdminProductFormScreen({ navigation, route }) {
         <PrimaryButton
           title={productId ? "Update product" : "Save product"}
           icon="save"
-          loading={loading}
+          loading={loading || imageProcessing}
+          disabled={imageProcessing}
           onPress={save}
         />
       </ScrollView>

@@ -1,11 +1,18 @@
 const express = require("express");
 const { body, param } = require("express-validator");
+const multer = require("multer");
 const productController = require("../controllers/product.controller");
 const isAdmin = require("../middleware/isAdmin");
 const validateRequest = require("../middleware/validateRequest");
 const verifyToken = require("../middleware/verifyToken");
 
 const router = express.Router();
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+  },
+});
 
 const categories = ["Bread", "Pasta", "Snacks", "Flour", "Sweets", "Other"];
 
@@ -75,6 +82,15 @@ router.post(
   productValidators,
   validateRequest,
   productController.createProduct
+);
+router.put(
+  "/:id/image",
+  verifyToken,
+  isAdmin,
+  idValidator,
+  validateRequest,
+  upload.single("image"),
+  productController.uploadProductImage
 );
 router.put(
   "/:id",

@@ -168,6 +168,17 @@ test("Glutenia API integration flow", async () => {
 
   assert.equal(updatedProduct.body.data.stock, 20);
 
+  const uploadedImage = await request(app)
+    .put(`/api/products/${productId}/image`)
+    .set("Authorization", `Bearer ${adminToken}`)
+    .attach("image", Buffer.from("glutenia-image"), {
+      filename: "product.png",
+      contentType: "image/png",
+    })
+    .expect(200);
+
+  assert.match(uploadedImage.body.data.imageUrl, /^data:image\/png;base64,/);
+
   await Cart.create({
     user: customerId,
     items: [

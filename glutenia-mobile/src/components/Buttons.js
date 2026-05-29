@@ -26,11 +26,17 @@ export function PrimaryButton({ title, icon, loading, disabled, onPress, style }
   );
 }
 
-export function SecondaryButton({ title, icon, onPress, style }) {
+export function SecondaryButton({ title, icon, disabled, onPress, style }) {
   return (
     <Pressable
+      disabled={disabled}
       onPress={onPress}
-      style={({ pressed }) => [styles.secondary, pressed && styles.pressed, style]}
+      style={({ pressed }) => [
+        styles.secondary,
+        pressed && styles.pressed,
+        disabled && styles.disabled,
+        style,
+      ]}
     >
       <View style={styles.buttonContent}>
         {icon ? <AppIcon name={icon} size={18} color={Colors.secondary} /> : null}

@@ -43,8 +43,12 @@ const request = async (path, options = {}) => {
   const { token, body, timeoutMs = DEFAULT_TIMEOUT_MS, ...rest } = options;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  const isFormData =
+    body &&
+    typeof body.append === "function" &&
+    Object.prototype.toString.call(body) === "[object FormData]";
   const headers = {
-    "Content-Type": "application/json",
+    ...(isFormData ? {} : { "Content-Type": "application/json" }),
     ...(rest.headers || {}),
   };
 
@@ -58,7 +62,7 @@ const request = async (path, options = {}) => {
       ...rest,
       headers,
       signal: controller.signal,
-      body: body ? JSON.stringify(body) : undefined,
+      body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
     });
   } catch (error) {
     const requestError = new Error(
@@ -101,6 +105,21 @@ export const api = {
     request("/products", { method: "POST", token, body }),
   updateProduct: (token, id, body) =>
     request(`/products/${id}`, { method: "PUT", token, body }),
+  uploadProductImage: (token, id, image) => {
+    const formData = new FormData();
+    formData.append("image", {
+      uri: image.uri,
+      name: image.name || `product-${id}.jpg`,
+      type: image.type || "image/jpeg",
+    });
+
+    return request(`/products/${id}/image`, {
+      method: "PUT",
+      token,
+      body: formData,
+      timeoutMs: 45000,
+    });
+  },
   deleteProduct: (token, id) =>
     request(`/products/${id}`, { method: "DELETE", token }),
   createOrder: (token, body) =>

@@ -107,6 +107,48 @@ exports.updateProduct = async (req, res, next) => {
   }
 };
 
+exports.uploadProductImage = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "Product image is required",
+      });
+    }
+
+    if (!req.file.mimetype.startsWith("image/")) {
+      return res.status(400).json({
+        success: false,
+        message: "Only image uploads are allowed",
+      });
+    }
+
+    const imageUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
+    const product = await Product.findByIdAndUpdate(
+      req.params.id,
+      { imageUrl },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: product,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 exports.deleteProduct = async (req, res, next) => {
   try {
     const product = await Product.findByIdAndDelete(req.params.id);
