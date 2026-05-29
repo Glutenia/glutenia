@@ -1,6 +1,7 @@
 import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 import { useEffect, useState } from "react";
 import * as ImagePicker from "expo-image-picker";
+import * as ImageManipulator from "expo-image-manipulator";
 import Screen from "../../components/Screen";
 import SectionHeader from "../../components/SectionHeader";
 import Field from "../../components/Field";
@@ -112,9 +113,8 @@ export default function AdminProductFormScreen({ navigation, route }) {
     const result = await ImagePicker.launchImageLibraryAsync({
       allowsEditing: true,
       aspect: [4, 3],
-      base64: true,
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.35,
+      quality: 1,
     });
 
     if (result.canceled) {
@@ -122,12 +122,31 @@ export default function AdminProductFormScreen({ navigation, route }) {
     }
 
     const asset = result.assets?.[0];
-    if (!asset?.base64) {
+    if (!asset?.uri) {
       Alert.alert("Image", "Could not read this image. Try another photo.");
       return;
     }
 
-    setImageUrl(`data:image/jpeg;base64,${asset.base64}`);
+    try {
+      const image = await ImageManipulator.manipulateAsync(
+        asset.uri,
+        [{ resize: { width: 900 } }],
+        {
+          base64: true,
+          compress: 0.55,
+          format: ImageManipulator.SaveFormat.JPEG,
+        }
+      );
+
+      if (!image.base64) {
+        Alert.alert("Image", "Could not prepare this image. Try another photo.");
+        return;
+      }
+
+      setImageUrl(`data:image/jpeg;base64,${image.base64}`);
+    } catch (error) {
+      Alert.alert("Image", "Could not prepare this image. Try another photo.");
+    }
   };
 
   return (
