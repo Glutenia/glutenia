@@ -37,10 +37,7 @@ const cartSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
-  items: {
-    type: [cartItemSchema],
-    default: [],
-  },
+  items: [cartItemSchema],
   updatedAt: {
     type: Date,
     default: Date.now,

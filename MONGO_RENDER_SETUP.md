@@ -61,6 +61,8 @@ This repo includes `render.yaml` for a free Render web service:
 - Start command: `npm start`
 - Health check path: `/`
 
+There is also a root `package.json` fallback. If a manually created Render service ignores `render.yaml` and runs from the repository root, root `postinstall` installs `glutenia-backend` and root `start` launches the backend.
+
 In the Render dashboard for the `glutenia` service, set:
 
 ```env
@@ -72,6 +74,8 @@ CORS_ORIGIN=
 ```
 
 Render supplies the `PORT` value automatically. The backend binds to `0.0.0.0` so Render can route traffic to it.
+
+If Render shows `Couldn't find a package.json file in "/opt/render/project/src"`, it is running from the repo root. Deploy a commit that includes the root `package.json`, or set the Render service root directory to `glutenia-backend`.
 
 ## GitHub Push
 
