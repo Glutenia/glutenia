@@ -1,6 +1,6 @@
 import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
 import { useEffect, useMemo, useState } from "react";
-import { Ionicons } from "@expo/vector-icons";
+import AppIcon from "../../components/AppIcon";
 import Screen from "../../components/Screen";
 import SectionHeader from "../../components/SectionHeader";
 import ProductCard from "../../components/ProductCard";
@@ -41,7 +41,7 @@ export default function HomeScreen({ navigation }) {
   const headerRight = useMemo(
     () => (
       <Pressable style={styles.cartIcon} onPress={() => navigation.navigate("Cart")}>
-        <Ionicons name="basket" size={22} color={Colors.primary} />
+        <AppIcon name="basket" size={22} color={Colors.primary} />
         {count > 0 ? (
           <View style={styles.badge}>
             <Text style={styles.badgeText}>{count}</Text>
@@ -58,7 +58,7 @@ export default function HomeScreen({ navigation }) {
         <SectionHeader eyebrow="Glutenia" title="Shop gluten-free" right={headerRight} />
 
         <View style={styles.searchBox}>
-          <Ionicons name="search" size={19} color={Colors.textMuted} />
+          <AppIcon name="search" size={19} color={Colors.textMuted} />
           <TextInput
             value={search}
             onChangeText={setSearch}

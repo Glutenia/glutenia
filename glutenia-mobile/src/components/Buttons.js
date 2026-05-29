@@ -1,5 +1,5 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import AppIcon from "./AppIcon";
 import { Colors, Radius } from "../theme/colors";
 
 export function PrimaryButton({ title, icon, loading, disabled, onPress, style }) {
@@ -18,7 +18,7 @@ export function PrimaryButton({ title, icon, loading, disabled, onPress, style }
         <ActivityIndicator color={Colors.surface} />
       ) : (
         <View style={styles.buttonContent}>
-          {icon ? <Ionicons name={icon} size={18} color={Colors.surface} /> : null}
+          {icon ? <AppIcon name={icon} size={18} color={Colors.surface} /> : null}
           <Text style={styles.primaryText}>{title}</Text>
         </View>
       )}
@@ -33,7 +33,7 @@ export function SecondaryButton({ title, icon, onPress, style }) {
       style={({ pressed }) => [styles.secondary, pressed && styles.pressed, style]}
     >
       <View style={styles.buttonContent}>
-        {icon ? <Ionicons name={icon} size={18} color={Colors.secondary} /> : null}
+        {icon ? <AppIcon name={icon} size={18} color={Colors.secondary} /> : null}
         <Text style={styles.secondaryText}>{title}</Text>
       </View>
     </Pressable>
@@ -46,7 +46,7 @@ export function IconButton({ icon, onPress, color = Colors.textDark, style }) {
       onPress={onPress}
       style={({ pressed }) => [styles.icon, pressed && styles.pressed, style]}
     >
-      <Ionicons name={icon} size={20} color={color} />
+      <AppIcon name={icon} size={20} color={color} />
     </Pressable>
   );
 }

@@ -1,6 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { Alert } from "react-native";
 import { api } from "../api/client";
 
 const STORAGE_KEY = "glutenia.session";
@@ -20,16 +19,13 @@ export const AuthProvider = ({ children }) => {
           if (session.token) {
             const freshUser = await api.me(session.token, { timeoutMs: 8000 });
             const nextSession = { ...session, user: freshUser };
-            setUser(nextSession.user);
             setToken(nextSession.token);
+            setUser(nextSession.user);
             await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(nextSession));
           }
         }
       } catch (error) {
         await AsyncStorage.removeItem(STORAGE_KEY);
-        if (error.status !== 0) {
-          Alert.alert("Session expired", "Please log in again.");
-        }
       } finally {
         setLoading(false);
       }
@@ -39,8 +35,8 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const persistSession = async (session) => {
-    setUser(session.user);
     setToken(session.token);
+    setUser(session.user);
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(session));
   };
 

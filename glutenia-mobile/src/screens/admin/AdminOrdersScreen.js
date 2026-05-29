@@ -9,16 +9,26 @@ import { api } from "../../api/client";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 
 export default function AdminOrdersScreen() {
-  const { token } = useAuth();
+  const { token, logout } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const loadOrders = async () => {
+    if (!token) {
+      return;
+    }
+
     try {
       setLoading(true);
       setOrders(await api.allOrders(token));
     } catch (error) {
-      Alert.alert("Orders", error.message);
+      if (error.status === 401) {
+        Alert.alert("Session expired", "Please log in as admin again.", [
+          { text: "OK", onPress: logout },
+        ]);
+      } else {
+        Alert.alert("Orders", error.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -27,7 +37,7 @@ export default function AdminOrdersScreen() {
   useFocusEffect(
     useCallback(() => {
       loadOrders();
-    }, [])
+    }, [token])
   );
 
   return (

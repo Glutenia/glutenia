@@ -12,17 +12,35 @@ export default function RegisterScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("customer");
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
-    if (!name || !email || password.length < 6) {
-      Alert.alert("Check details", "Name, email, and a 6 character password are required.");
+    const trimmedEmail = email.trim();
+    const nextErrors = {};
+
+    if (!name.trim()) {
+      nextErrors.name = "Name is required.";
+    }
+
+    if (!trimmedEmail) {
+      nextErrors.email = "Email is required.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      nextErrors.email = "Enter a valid email address.";
+    }
+
+    if (password.length < 6) {
+      nextErrors.password = "Password must be at least 6 characters.";
+    }
+
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length) {
       return;
     }
 
     try {
       setLoading(true);
-      await register({ name: name.trim(), email: email.trim(), password, role });
+      await register({ name: name.trim(), email: trimmedEmail, password, role });
     } catch (error) {
       Alert.alert("Register failed", error.message);
     } finally {
@@ -42,18 +60,34 @@ export default function RegisterScreen({ navigation }) {
         </View>
 
         <View style={styles.card}>
-          <Field label="Name" value={name} onChangeText={setName} />
+          <Field
+            label="Name"
+            value={name}
+            error={errors.name}
+            onChangeText={(value) => {
+              setName(value);
+              setErrors((current) => ({ ...current, name: "" }));
+            }}
+          />
           <Field
             label="Email"
             value={email}
-            onChangeText={setEmail}
+            error={errors.email}
+            onChangeText={(value) => {
+              setEmail(value);
+              setErrors((current) => ({ ...current, email: "" }));
+            }}
             keyboardType="email-address"
             autoCapitalize="none"
           />
           <Field
             label="Password"
             value={password}
-            onChangeText={setPassword}
+            error={errors.password}
+            onChangeText={(value) => {
+              setPassword(value);
+              setErrors((current) => ({ ...current, password: "" }));
+            }}
             secureTextEntry
           />
           <View style={styles.roleWrap}>

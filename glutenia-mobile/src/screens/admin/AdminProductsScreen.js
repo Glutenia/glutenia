@@ -1,5 +1,5 @@
 import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import AppIcon from "../../components/AppIcon";
 import { useCallback, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import Screen from "../../components/Screen";
@@ -16,6 +16,10 @@ export default function AdminProductsScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
 
   const loadProducts = async () => {
+    if (!token) {
+      return;
+    }
+
     try {
       setLoading(true);
       setProducts(await api.products());
@@ -46,6 +50,10 @@ export default function AdminProductsScreen({ navigation }) {
         style: "destructive",
         onPress: async () => {
           try {
+            if (!token) {
+              Alert.alert("Session", "Please log in again.");
+              return;
+            }
             await api.deleteProduct(token, product._id);
             await loadProducts();
           } catch (error) {
@@ -67,7 +75,7 @@ export default function AdminProductsScreen({ navigation }) {
               style={styles.addButton}
               onPress={() => navigation.navigate("AdminProductForm")}
             >
-              <Ionicons name="add" size={24} color={Colors.surface} />
+              <AppIcon name="add" size={24} color={Colors.surface} />
             </Pressable>
           }
         />
@@ -98,11 +106,11 @@ export default function AdminProductsScreen({ navigation }) {
                     navigation.navigate("AdminProductForm", { productId: item._id })
                   }
                 >
-                  <Ionicons name="pencil" size={18} color={Colors.primary} />
+                  <AppIcon name="pencil" size={18} color={Colors.primary} />
                   <Text style={styles.actionText}>Edit</Text>
                 </Pressable>
                 <Pressable style={styles.actionButton} onPress={() => deleteProduct(item)}>
-                  <Ionicons name="trash" size={18} color={Colors.danger} />
+                  <AppIcon name="trash" size={18} color={Colors.danger} />
                   <Text style={[styles.actionText, styles.deleteText]}>Delete</Text>
                 </Pressable>
               </View>

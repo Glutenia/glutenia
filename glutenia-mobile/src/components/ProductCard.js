@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import AppIcon from "./AppIcon";
 import { Colors, Radius, Shadow } from "../theme/colors";
 import GlutenFreeBadge from "./GlutenFreeBadge";
 import ProductVisual from "./ProductVisual";
@@ -19,7 +19,7 @@ export default function ProductCard({ product, onPress, onAdd }) {
         <View style={styles.bottom}>
           <Text style={styles.price}>{product.price.toFixed(2)} TND</Text>
           <Pressable style={styles.addButton} onPress={onAdd}>
-            <Ionicons name="add" size={20} color={Colors.surface} />
+            <AppIcon name="add" size={20} color={Colors.surface} />
           </Pressable>
         </View>
       </View>

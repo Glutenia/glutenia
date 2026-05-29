@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import AppIcon from "../../components/AppIcon";
 import Screen from "../../components/Screen";
 import { PrimaryButton, SecondaryButton } from "../../components/Buttons";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
@@ -13,7 +13,7 @@ export default function OrderSuccessScreen({ navigation, route }) {
       <View style={styles.container}>
         <View style={styles.card}>
           <View style={styles.iconWrap}>
-            <Ionicons name="checkmark" size={54} color={Colors.surface} />
+            <AppIcon name="checkmark" size={54} color={Colors.surface} />
           </View>
           <Text style={styles.title}>Order placed</Text>
           <Text style={styles.body}>Your Glutenia order is confirmed.</Text>

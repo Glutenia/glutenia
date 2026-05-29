@@ -1,5 +1,5 @@
 import { Image, StyleSheet, Text, View } from "react-native";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import AppIcon from "./AppIcon";
 import { Colors, Radius } from "../theme/colors";
 
 const iconByCategory = {
@@ -26,7 +26,7 @@ export default function ProductVisual({ product, size = "card" }) {
 
   return (
     <View style={[styles.placeholder, isLarge && styles.large]}>
-      <MaterialCommunityIcons
+      <AppIcon
         name={iconByCategory[product?.category] || "leaf"}
         size={isLarge ? 62 : 34}
         color={Colors.primary}

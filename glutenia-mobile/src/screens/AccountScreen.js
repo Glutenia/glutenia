@@ -1,5 +1,5 @@
 import { Alert, StyleSheet, Text, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import AppIcon from "../components/AppIcon";
 import Screen from "../components/Screen";
 import SectionHeader from "../components/SectionHeader";
 import { PrimaryButton, SecondaryButton } from "../components/Buttons";
@@ -23,7 +23,7 @@ export default function AccountScreen() {
         <SectionHeader eyebrow="Profile" title="Account" />
         <View style={styles.card}>
           <View style={styles.avatar}>
-            <Ionicons name="person" size={32} color={Colors.primary} />
+            <AppIcon name="person" size={32} color={Colors.primary} />
           </View>
           <Text style={styles.name}>{user?.name}</Text>
           <Text style={styles.email}>{user?.email}</Text>

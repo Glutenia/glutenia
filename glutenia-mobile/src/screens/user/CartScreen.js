@@ -1,5 +1,5 @@
 import { Alert, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import AppIcon from "../../components/AppIcon";
 import Screen from "../../components/Screen";
 import SectionHeader from "../../components/SectionHeader";
 import EmptyState from "../../components/EmptyState";
@@ -29,7 +29,7 @@ export default function CartScreen({ navigation }) {
                   ])
                 }
               >
-                <Ionicons name="trash" size={18} color={Colors.danger} />
+                <AppIcon name="trash" size={18} color={Colors.danger} />
               </Pressable>
             ) : null
           }
@@ -61,7 +61,7 @@ export default function CartScreen({ navigation }) {
                     onChange={(qty) => updateQty(item.productId, qty)}
                   />
                   <Pressable onPress={() => removeItem(item.productId)}>
-                    <Ionicons name="close-circle" size={28} color={Colors.danger} />
+                    <AppIcon name="close-circle" size={28} color={Colors.danger} />
                   </Pressable>
                 </View>
               </View>

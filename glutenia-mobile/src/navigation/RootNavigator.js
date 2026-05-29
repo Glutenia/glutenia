@@ -2,7 +2,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { ActivityIndicator, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import AppIcon from "../components/AppIcon";
 import { useAuth } from "../context/AuthContext";
 import { Colors } from "../theme/colors";
 import LoginScreen from "../screens/auth/LoginScreen";
@@ -51,7 +51,7 @@ const tabOptions = ({ route }) => ({
       Dashboard: "grid",
       Products: "cube",
     };
-    return <Ionicons name={icons[route.name] || "ellipse"} size={size} color={color} />;
+    return <AppIcon name={icons[route.name] || "ellipse"} size={size} color={color} />;
   },
 });
 

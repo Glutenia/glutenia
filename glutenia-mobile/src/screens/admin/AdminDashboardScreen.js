@@ -1,5 +1,5 @@
 import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import AppIcon from "../../components/AppIcon";
 import { useCallback, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import Screen from "../../components/Screen";
@@ -15,6 +15,10 @@ export default function AdminDashboardScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
 
   const load = async () => {
+    if (!token) {
+      return;
+    }
+
     try {
       setLoading(true);
       const [nextProducts, nextOrders] = await Promise.all([
@@ -81,7 +85,7 @@ export default function AdminDashboardScreen({ navigation }) {
 function Metric({ label, value, icon }) {
   return (
     <View style={styles.metric}>
-      <Ionicons name={icon} size={22} color={Colors.primary} />
+      <AppIcon name={icon} size={22} color={Colors.primary} />
       <Text style={styles.metricValue}>{value}</Text>
       <Text style={styles.metricLabel}>{label}</Text>
     </View>
@@ -91,7 +95,7 @@ function Metric({ label, value, icon }) {
 function Action({ title, icon, onPress }) {
   return (
     <Pressable style={({ pressed }) => [styles.action, pressed && styles.pressed]} onPress={onPress}>
-      <Ionicons name={icon} size={24} color={Colors.surface} />
+      <AppIcon name={icon} size={24} color={Colors.surface} />
       <Text style={styles.actionText}>{title}</Text>
     </Pressable>
   );

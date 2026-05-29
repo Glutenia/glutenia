@@ -10,17 +10,31 @@ export default function LoginScreen({ navigation }) {
   const { login } = useAuth();
   const [email, setEmail] = useState("admin@glutenia.tn");
   const [password, setPassword] = useState("admin123");
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert("Missing details", "Enter your email and password.");
+    const nextErrors = {};
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail) {
+      nextErrors.email = "Email is required.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      nextErrors.email = "Enter a valid email address.";
+    }
+
+    if (!password) {
+      nextErrors.password = "Password is required.";
+    }
+
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length) {
       return;
     }
 
     try {
       setLoading(true);
-      await login({ email: email.trim(), password });
+      await login({ email: trimmedEmail, password });
     } catch (error) {
       Alert.alert("Login failed", error.message);
     } finally {
@@ -45,14 +59,22 @@ export default function LoginScreen({ navigation }) {
           <Field
             label="Email"
             value={email}
-            onChangeText={setEmail}
+            error={errors.email}
+            onChangeText={(value) => {
+              setEmail(value);
+              setErrors((current) => ({ ...current, email: "" }));
+            }}
             keyboardType="email-address"
             autoCapitalize="none"
           />
           <Field
             label="Password"
             value={password}
-            onChangeText={setPassword}
+            error={errors.password}
+            onChangeText={(value) => {
+              setPassword(value);
+              setErrors((current) => ({ ...current, password: "" }));
+            }}
             secureTextEntry
           />
           <PrimaryButton

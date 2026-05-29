@@ -1,11 +1,11 @@
 import { StyleSheet, Text, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import AppIcon from "./AppIcon";
 import { Colors, Radius } from "../theme/colors";
 
 export default function GlutenFreeBadge({ compact }) {
   return (
     <View style={[styles.badge, compact && styles.compact]}>
-      <Ionicons name="leaf" size={compact ? 11 : 13} color={Colors.surface} />
+      <AppIcon name="leaf" size={compact ? 14 : 16} color={Colors.surface} />
       <Text style={[styles.text, compact && styles.compactText]}>Gluten Free</Text>
     </View>
   );

@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import AppIcon from "./AppIcon";
 import { Colors, Radius } from "../theme/colors";
 
 export default function QuantityStepper({ value, onChange, min = 1 }) {
@@ -9,11 +9,11 @@ export default function QuantityStepper({ value, onChange, min = 1 }) {
         style={styles.button}
         onPress={() => onChange(Math.max(min, value - 1))}
       >
-        <Ionicons name="remove" size={18} color={Colors.textDark} />
+        <AppIcon name="remove" size={18} color={Colors.textDark} />
       </Pressable>
       <Text style={styles.value}>{value}</Text>
       <Pressable style={styles.button} onPress={() => onChange(value + 1)}>
-        <Ionicons name="add" size={18} color={Colors.textDark} />
+        <AppIcon name="add" size={18} color={Colors.textDark} />
       </Pressable>
     </View>
   );

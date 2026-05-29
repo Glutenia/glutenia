@@ -22,6 +22,7 @@ export default function AdminProductFormScreen({ navigation, route }) {
   const [imageUrl, setImageUrl] = useState("");
   const [stock, setStock] = useState("0");
   const [isGlutenFree, setIsGlutenFree] = useState(true);
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -51,15 +52,34 @@ export default function AdminProductFormScreen({ navigation, route }) {
   const save = async () => {
     const numericPrice = Number(price);
     const numericStock = Number(stock || 0);
-    if (!name || Number.isNaN(numericPrice) || numericPrice < 0) {
-      Alert.alert("Check product", "Name and a valid price are required.");
+    const nextErrors = {};
+
+    if (!name.trim()) {
+      nextErrors.name = "Product name is required.";
+    }
+
+    if (Number.isNaN(numericPrice) || numericPrice < 0) {
+      nextErrors.price = "Enter a valid price.";
+    }
+
+    if (!Number.isInteger(numericStock) || numericStock < 0) {
+      nextErrors.stock = "Stock must be 0 or more.";
+    }
+
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length) {
       return;
     }
 
     try {
+      if (!token) {
+        Alert.alert("Session", "Please log in again.");
+        return;
+      }
+
       setLoading(true);
       const body = {
-        name,
+        name: name.trim(),
         description,
         price: numericPrice,
         category,
@@ -119,7 +139,15 @@ export default function AdminProductFormScreen({ navigation, route }) {
           title={productId ? "Edit product" : "Add product"}
           right={<IconButton icon="close" onPress={() => navigation.goBack()} />}
         />
-        <Field label="Product name" value={name} onChangeText={setName} />
+        <Field
+          label="Product name"
+          value={name}
+          error={errors.name}
+          onChangeText={(value) => {
+            setName(value);
+            setErrors((current) => ({ ...current, name: "" }));
+          }}
+        />
         <Field
           label="Description"
           value={description}
@@ -130,14 +158,22 @@ export default function AdminProductFormScreen({ navigation, route }) {
           <Field
             label="Price"
             value={price}
-            onChangeText={setPrice}
+            error={errors.price}
+            onChangeText={(value) => {
+              setPrice(value);
+              setErrors((current) => ({ ...current, price: "" }));
+            }}
             keyboardType="decimal-pad"
             style={styles.flex}
           />
           <Field
             label="Stock"
             value={stock}
-            onChangeText={setStock}
+            error={errors.stock}
+            onChangeText={(value) => {
+              setStock(value);
+              setErrors((current) => ({ ...current, stock: "" }));
+            }}
             keyboardType="number-pad"
             style={styles.flex}
           />
