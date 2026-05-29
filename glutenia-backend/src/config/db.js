@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
 
 const DEFAULT_DB_NAME = "glutenia";
+const FALLBACK_MONGO_URI =
+  "mongodb+srv://i33237431_db_user:u9p011qHW5RlaenC@glutenia.mgyqjf6.mongodb.net/glutenia?retryWrites=true&w=majority&appName=glutenia";
 
 const getDbNameFromUri = (mongoUri) => {
   try {
@@ -13,11 +15,8 @@ const getDbNameFromUri = (mongoUri) => {
 };
 
 const connectDB = async () => {
-  const mongoUri = process.env.MONGO_URI || process.env.MONGODB_URI;
-
-  if (!mongoUri) {
-    throw new Error("MONGO_URI or MONGODB_URI is not defined");
-  }
+  const mongoUri =
+    process.env.MONGO_URI || process.env.MONGODB_URI || FALLBACK_MONGO_URI;
 
   const connectionOptions = {};
   if (!getDbNameFromUri(mongoUri)) {
