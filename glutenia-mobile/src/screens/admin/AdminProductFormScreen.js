@@ -1,7 +1,6 @@
 import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 import { useEffect, useRef, useState } from "react";
 import * as ImagePicker from "expo-image-picker";
-import * as ImageManipulator from "expo-image-manipulator";
 import Screen from "../../components/Screen";
 import SectionHeader from "../../components/SectionHeader";
 import Field from "../../components/Field";
@@ -12,13 +11,28 @@ import { api } from "../../api/client";
 import { Colors, Radius, Spacing } from "../../theme/colors";
 
 const categories = ["Bread", "Pasta", "Snacks", "Flour", "Sweets", "Other"];
-const MAX_IMAGE_DATA_URL_LENGTH = 900000;
-const imageCompressionSteps = [
-  { width: 720, compress: 0.42 },
-  { width: 560, compress: 0.32 },
-  { width: 440, compress: 0.24 },
-  { width: 340, compress: 0.18 },
-];
+const MAX_IMAGE_DATA_URL_LENGTH = 5500000;
+
+const readUriAsDataUrl = async (uri, mimeType) => {
+  const response = await fetch(uri);
+  const blob = await response.blob();
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Could not read selected image."));
+    reader.onloadend = () => {
+      const result = typeof reader.result === "string" ? reader.result : "";
+      if (result.startsWith("data:image/")) {
+        resolve(result);
+        return;
+      }
+
+      const base64 = result.split(",")[1];
+      resolve(base64 ? `data:${mimeType};base64,${base64}` : "");
+    };
+    reader.readAsDataURL(blob);
+  });
+};
 
 export default function AdminProductFormScreen({ navigation, route }) {
   const { token } = useAuth();
@@ -143,65 +157,61 @@ export default function AdminProductFormScreen({ navigation, route }) {
   };
 
   const pickImage = async () => {
+    setImageStatus("Checking photo permission...");
+
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
+      setImageStatus("Photo permission denied.");
       Alert.alert("Photos", "Allow photo access to upload a product image.");
       return;
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      allowsEditing: true,
-      aspect: [4, 3],
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 1,
+      allowsEditing: false,
+      base64: true,
+      mediaTypes: ["images"],
+      quality: 0.25,
     });
 
     if (result.canceled) {
+      setImageStatus("Image selection cancelled.");
       return;
     }
 
     const asset = result.assets?.[0];
     if (!asset?.uri) {
+      setImageStatus("Could not read the selected image.");
       Alert.alert("Image", "Could not read this image. Try another photo.");
       return;
     }
 
     try {
       setImageProcessing(true);
-      let image = null;
-      let dataUrl = "";
+      setImageStatus("Image selected. Reading image data...");
+      const mimeType = asset.mimeType || "image/jpeg";
+      const dataUrl = asset.base64
+        ? `data:${mimeType};base64,${asset.base64}`
+        : await readUriAsDataUrl(asset.uri, mimeType);
 
-      for (const step of imageCompressionSteps) {
-        image = await ImageManipulator.manipulateAsync(
-          asset.uri,
-          [{ resize: { width: step.width } }],
-          {
-            base64: true,
-            compress: step.compress,
-            format: ImageManipulator.SaveFormat.JPEG,
-          }
-        );
-
-        if (image?.base64) {
-          dataUrl = `data:image/jpeg;base64,${image.base64}`;
-        }
-
-        if (dataUrl && dataUrl.length <= MAX_IMAGE_DATA_URL_LENGTH) {
-          break;
-        }
+      if (!dataUrl.startsWith("data:image/")) {
+        setImageStatus("Selected image could not be read.");
+        Alert.alert("Image", "Could not read this image. Try another photo.");
+        return;
       }
 
-      if (!image?.uri || !dataUrl) {
-        Alert.alert("Image", "Could not prepare this image. Try another photo.");
+      if (dataUrl.length > MAX_IMAGE_DATA_URL_LENGTH) {
+        setImageStatus(`Image is too large: ${Math.ceil(dataUrl.length / 1024)} KB.`);
+        Alert.alert("Image too large", "Choose a smaller image or screenshot and try again.");
         return;
       }
 
       imageDataUrlRef.current = dataUrl;
       setRemoveImage(false);
-      setImageUrl(dataUrl);
+      setImageUrl(asset.uri);
       setImageStatus(`Image ready: ${Math.ceil(dataUrl.length / 1024)} KB. Save product to upload.`);
       Alert.alert("Image ready", "Now press Save product to upload it.");
     } catch (error) {
+      setImageStatus("Image preparation failed.");
       Alert.alert("Image", "Could not prepare this image. Try another photo.");
     } finally {
       setImageProcessing(false);
@@ -278,6 +288,16 @@ export default function AdminProductFormScreen({ navigation, route }) {
         </View>
         <View style={styles.imageSection}>
           <Text style={styles.label}>Product image</Text>
+          <View
+            style={[
+              styles.imageStatusBox,
+              imageStatus ? styles.imageStatusBoxActive : null,
+            ]}
+          >
+            <Text style={styles.imageStatus}>
+              {imageStatus || "No image selected yet."}
+            </Text>
+          </View>
           <View style={styles.imagePreview}>
             <ProductVisual product={{ imageUrl, category }} size="large" />
           </View>
@@ -310,7 +330,6 @@ export default function AdminProductFormScreen({ navigation, route }) {
               />
             ) : null}
           </View>
-          {imageStatus ? <Text style={styles.imageStatus}>{imageStatus}</Text> : null}
         </View>
         <View style={styles.switchCard}>
           <View>
@@ -393,8 +412,20 @@ const styles = StyleSheet.create({
   imageAction: {
     flex: 1,
   },
+  imageStatusBox: {
+    borderRadius: Radius.md,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.divider,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  imageStatusBoxActive: {
+    borderColor: Colors.secondary,
+    backgroundColor: Colors.secondaryPale,
+  },
   imageStatus: {
-    color: Colors.secondary,
+    color: Colors.textDark,
     fontSize: 12,
     fontWeight: "800",
   },

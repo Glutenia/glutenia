@@ -2,7 +2,7 @@
   "expo": {
     "name": "Glutenia",
     "slug": "glutenia-mobile",
-    "version": "1.0.9",
+    "version": "1.0.11",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "glutenia",
@@ -17,8 +17,12 @@
     },
     "android": {
       "package": "com.glutenia.mobile",
-      "versionCode": 10,
+      "versionCode": 12,
       "jsEngine": "jsc",
+      "permissions": [
+        "READ_MEDIA_IMAGES",
+        "READ_EXTERNAL_STORAGE"
+      ],
       "blockedPermissions": [
         "android.permission.RECORD_AUDIO"
       ],
