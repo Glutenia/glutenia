@@ -1,0 +1,168 @@
+import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useCallback, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+import Screen from "../../components/Screen";
+import SectionHeader from "../../components/SectionHeader";
+import EmptyState from "../../components/EmptyState";
+import ProductVisual from "../../components/ProductVisual";
+import { useAuth } from "../../context/AuthContext";
+import { api } from "../../api/client";
+import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
+
+export default function AdminProductsScreen({ navigation }) {
+  const { token } = useAuth();
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const loadProducts = async () => {
+    try {
+      setLoading(true);
+      setProducts(await api.products());
+    } catch (error) {
+      Alert.alert("Products", error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      loadProducts();
+    }, [])
+  );
+
+  const deleteProduct = (product) => {
+    Alert.alert("Delete product", `Delete ${product.name}?`, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await api.deleteProduct(token, product._id);
+            await loadProducts();
+          } catch (error) {
+            Alert.alert("Delete failed", error.message);
+          }
+        },
+      },
+    ]);
+  };
+
+  return (
+    <Screen>
+      <View style={styles.container}>
+        <SectionHeader
+          eyebrow="Inventory"
+          title="Products"
+          right={
+            <Pressable
+              style={styles.addButton}
+              onPress={() => navigation.navigate("AdminProductForm")}
+            >
+              <Ionicons name="add" size={24} color={Colors.surface} />
+            </Pressable>
+          }
+        />
+        <FlatList
+          data={products}
+          keyExtractor={(item) => item._id}
+          refreshControl={<RefreshControl refreshing={loading} onRefresh={loadProducts} />}
+          contentContainerStyle={styles.listContent}
+          ListEmptyComponent={<EmptyState icon="cube" title="No products" body="Add the first item." />}
+          renderItem={({ item }) => (
+            <View style={styles.productRow}>
+              <View style={styles.visual}>
+                <ProductVisual product={item} />
+              </View>
+              <View style={styles.productBody}>
+                <Text style={styles.name} numberOfLines={2}>
+                  {item.name}
+                </Text>
+                <Text style={styles.meta}>
+                  {item.category} - Stock {item.stock}
+                </Text>
+                <Text style={styles.price}>{item.price.toFixed(2)} TND</Text>
+              </View>
+              <View style={styles.actions}>
+                <Pressable
+                  style={styles.smallButton}
+                  onPress={() =>
+                    navigation.navigate("AdminProductForm", { productId: item._id })
+                  }
+                >
+                  <Ionicons name="pencil" size={18} color={Colors.primary} />
+                </Pressable>
+                <Pressable style={styles.smallButton} onPress={() => deleteProduct(item)}>
+                  <Ionicons name="trash" size={18} color={Colors.danger} />
+                </Pressable>
+              </View>
+            </View>
+          )}
+        />
+      </View>
+    </Screen>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: Spacing.md,
+    gap: Spacing.md,
+  },
+  addButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: Colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  listContent: {
+    gap: 12,
+    paddingBottom: 24,
+  },
+  productRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.surface,
+    padding: 10,
+    gap: 12,
+    ...Shadow,
+  },
+  visual: {
+    width: 82,
+  },
+  productBody: {
+    flex: 1,
+    gap: 5,
+  },
+  name: {
+    color: Colors.textDark,
+    fontSize: 16,
+    fontWeight: "900",
+  },
+  meta: {
+    color: Colors.textMuted,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  price: {
+    color: Colors.primary,
+    fontWeight: "900",
+  },
+  actions: {
+    gap: 8,
+  },
+  smallButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: Colors.primaryPale,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});

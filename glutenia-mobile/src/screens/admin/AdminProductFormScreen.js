@@ -1,0 +1,220 @@
+import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import Screen from "../../components/Screen";
+import SectionHeader from "../../components/SectionHeader";
+import Field from "../../components/Field";
+import { IconButton, PrimaryButton } from "../../components/Buttons";
+import { useAuth } from "../../context/AuthContext";
+import { api } from "../../api/client";
+import { Colors, Radius, Spacing } from "../../theme/colors";
+
+const categories = ["Bread", "Pasta", "Snacks", "Flour", "Sweets", "Other"];
+
+export default function AdminProductFormScreen({ navigation, route }) {
+  const { token } = useAuth();
+  const productId = route.params?.productId;
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [price, setPrice] = useState("");
+  const [category, setCategory] = useState("Bread");
+  const [imageUrl, setImageUrl] = useState("");
+  const [stock, setStock] = useState("0");
+  const [isGlutenFree, setIsGlutenFree] = useState(true);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!productId) {
+      return;
+    }
+
+    const loadProduct = async () => {
+      try {
+        const product = await api.product(productId);
+        setName(product.name);
+        setDescription(product.description || "");
+        setPrice(String(product.price));
+        setCategory(product.category);
+        setImageUrl(product.imageUrl || "");
+        setStock(String(product.stock || 0));
+        setIsGlutenFree(Boolean(product.isGlutenFree));
+      } catch (error) {
+        Alert.alert("Product", error.message);
+        navigation.goBack();
+      }
+    };
+
+    loadProduct();
+  }, [productId]);
+
+  const save = async () => {
+    const numericPrice = Number(price);
+    const numericStock = Number(stock || 0);
+    if (!name || Number.isNaN(numericPrice) || numericPrice < 0) {
+      Alert.alert("Check product", "Name and a valid price are required.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const body = {
+        name,
+        description,
+        price: numericPrice,
+        category,
+        imageUrl,
+        stock: numericStock,
+        isGlutenFree,
+      };
+
+      if (productId) {
+        await api.updateProduct(token, productId, body);
+      } else {
+        await api.createProduct(token, body);
+      }
+
+      navigation.goBack();
+    } catch (error) {
+      Alert.alert("Save failed", error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Screen>
+      <ScrollView contentContainerStyle={styles.container}>
+        <SectionHeader
+          eyebrow="Inventory"
+          title={productId ? "Edit product" : "Add product"}
+          right={<IconButton icon="close" onPress={() => navigation.goBack()} />}
+        />
+        <Field label="Product name" value={name} onChangeText={setName} />
+        <Field
+          label="Description"
+          value={description}
+          onChangeText={setDescription}
+          multiline
+        />
+        <View style={styles.split}>
+          <Field
+            label="Price"
+            value={price}
+            onChangeText={setPrice}
+            keyboardType="decimal-pad"
+            style={styles.flex}
+          />
+          <Field
+            label="Stock"
+            value={stock}
+            onChangeText={setStock}
+            keyboardType="number-pad"
+            style={styles.flex}
+          />
+        </View>
+        <View style={styles.categoryWrap}>
+          <Text style={styles.label}>Category</Text>
+          <View style={styles.categories}>
+            {categories.map((item) => (
+              <Pressable
+                key={item}
+                onPress={() => setCategory(item)}
+                style={[styles.category, category === item && styles.categoryActive]}
+              >
+                <Text
+                  style={[
+                    styles.categoryText,
+                    category === item && styles.categoryTextActive,
+                  ]}
+                >
+                  {item}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+        <Field label="Image URL" value={imageUrl} onChangeText={setImageUrl} />
+        <View style={styles.switchCard}>
+          <View>
+            <Text style={styles.switchTitle}>Gluten Free Certified</Text>
+            <Text style={styles.switchSub}>Show the green GF badge on product cards.</Text>
+          </View>
+          <Switch
+            value={isGlutenFree}
+            onValueChange={setIsGlutenFree}
+            trackColor={{ false: Colors.divider, true: Colors.secondaryPale }}
+            thumbColor={isGlutenFree ? Colors.secondary : Colors.textMuted}
+          />
+        </View>
+        <PrimaryButton
+          title={productId ? "Update product" : "Save product"}
+          icon="save"
+          loading={loading}
+          onPress={save}
+        />
+      </ScrollView>
+    </Screen>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    padding: Spacing.md,
+    gap: Spacing.md,
+  },
+  split: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  flex: {
+    flex: 1,
+  },
+  categoryWrap: {
+    gap: 8,
+  },
+  label: {
+    color: Colors.textDark,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  categories: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  category: {
+    borderRadius: Radius.pill,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.divider,
+    paddingHorizontal: 13,
+    paddingVertical: 8,
+  },
+  categoryActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  categoryText: {
+    color: Colors.textMuted,
+    fontWeight: "800",
+  },
+  categoryTextActive: {
+    color: Colors.surface,
+  },
+  switchCard: {
+    borderRadius: Radius.md,
+    backgroundColor: Colors.surface,
+    padding: Spacing.md,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 14,
+  },
+  switchTitle: {
+    color: Colors.textDark,
+    fontWeight: "900",
+  },
+  switchSub: {
+    color: Colors.textMuted,
+    marginTop: 4,
+  },
+});

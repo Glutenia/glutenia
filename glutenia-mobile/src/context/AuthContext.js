@@ -1,0 +1,65 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { Alert } from "react-native";
+import { api } from "../api/client";
+
+const STORAGE_KEY = "glutenia.session";
+const AuthContext = createContext(null);
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const restore = async () => {
+      try {
+        const saved = await AsyncStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const session = JSON.parse(saved);
+          setUser(session.user);
+          setToken(session.token);
+        }
+      } catch (error) {
+        Alert.alert("Session", "Could not restore your saved session.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    restore();
+  }, []);
+
+  const persistSession = async (session) => {
+    setUser(session.user);
+    setToken(session.token);
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+  };
+
+  const login = async ({ email, password }) => {
+    const session = await api.login({ email, password });
+    await persistSession(session);
+    return session.user;
+  };
+
+  const register = async ({ name, email, password, role }) => {
+    const session = await api.register({ name, email, password, role });
+    await persistSession(session);
+    return session.user;
+  };
+
+  const logout = async () => {
+    setUser(null);
+    setToken(null);
+    await AsyncStorage.removeItem(STORAGE_KEY);
+  };
+
+  const value = useMemo(
+    () => ({ user, token, loading, login, register, logout }),
+    [user, token, loading]
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
+
+export const useAuth = () => useContext(AuthContext);
