@@ -1,5 +1,5 @@
 import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
 import Screen from "../../components/Screen";
@@ -12,16 +12,24 @@ import { api } from "../../api/client";
 import { Colors, Radius, Spacing } from "../../theme/colors";
 
 const categories = ["Bread", "Pasta", "Snacks", "Flour", "Sweets", "Other"];
+const MAX_IMAGE_DATA_URL_LENGTH = 900000;
+const imageCompressionSteps = [
+  { width: 720, compress: 0.42 },
+  { width: 560, compress: 0.32 },
+  { width: 440, compress: 0.24 },
+  { width: 340, compress: 0.18 },
+];
 
 export default function AdminProductFormScreen({ navigation, route }) {
   const { token } = useAuth();
   const productId = route.params?.productId;
+  const imageDataUrlRef = useRef("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("Bread");
   const [imageUrl, setImageUrl] = useState("");
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [imageStatus, setImageStatus] = useState("");
   const [removeImage, setRemoveImage] = useState(false);
   const [stock, setStock] = useState("0");
   const [isGlutenFree, setIsGlutenFree] = useState(true);
@@ -42,7 +50,8 @@ export default function AdminProductFormScreen({ navigation, route }) {
         setPrice(String(product.price));
         setCategory(product.category);
         setImageUrl(product.imageUrl || "");
-        setSelectedImage(null);
+        imageDataUrlRef.current = "";
+        setImageStatus(product.imageUrl ? "Current product has an image." : "");
         setRemoveImage(false);
         setStock(String(product.stock || 0));
         setIsGlutenFree(Boolean(product.isGlutenFree));
@@ -84,6 +93,7 @@ export default function AdminProductFormScreen({ navigation, route }) {
       }
 
       setLoading(true);
+      const imageDataUrl = imageDataUrlRef.current;
       const body = {
         name: name.trim(),
         description,
@@ -97,30 +107,34 @@ export default function AdminProductFormScreen({ navigation, route }) {
         body.imageUrl = "";
       }
 
-      if (selectedImage?.dataUrl) {
-        body.imageUrl = selectedImage.dataUrl;
+      if (imageDataUrl) {
+        body.imageUrl = imageDataUrl;
       }
 
       const savedProduct = productId
         ? await api.updateProduct(token, productId, body)
         : await api.createProduct(token, body);
 
-      if (selectedImage) {
-        const savedProductId = savedProduct?._id || productId;
-        if (!savedProductId) {
-          throw new Error("Product saved, but the server did not return its id.");
-        }
+      const savedProductId = savedProduct?._id || productId;
+      const confirmedProduct = savedProductId
+        ? await api.product(savedProductId)
+        : savedProduct;
+      const confirmedImageUrl = confirmedProduct?.imageUrl || "";
 
-        try {
-          await api.uploadProductImage(token, savedProductId, selectedImage);
-        } catch (imageError) {
-          if (!selectedImage.dataUrl) {
-            throw imageError;
-          }
-        }
+      if (imageDataUrl && !confirmedImageUrl.startsWith("data:image/")) {
+        throw new Error("The product saved, but MongoDB did not keep the image. Try a smaller photo.");
       }
 
-      navigation.goBack();
+      if (removeImage && confirmedImageUrl) {
+        throw new Error("The product saved, but MongoDB did not remove the image.");
+      }
+
+      setImageStatus(imageDataUrl ? "Image saved to MongoDB." : "Product saved.");
+      Alert.alert(
+        "Product saved",
+        imageDataUrl ? "Image uploaded and saved successfully." : "Product details saved.",
+        [{ text: "OK", onPress: () => navigation.goBack() }]
+      );
     } catch (error) {
       Alert.alert("Save failed", error.message);
     } finally {
@@ -154,29 +168,39 @@ export default function AdminProductFormScreen({ navigation, route }) {
 
     try {
       setImageProcessing(true);
-      const image = await ImageManipulator.manipulateAsync(
-        asset.uri,
-        [{ resize: { width: 720 } }],
-        {
-          base64: true,
-          compress: 0.42,
-          format: ImageManipulator.SaveFormat.JPEG,
-        }
-      );
+      let image = null;
+      let dataUrl = "";
 
-      if (!image.uri || !image.base64) {
+      for (const step of imageCompressionSteps) {
+        image = await ImageManipulator.manipulateAsync(
+          asset.uri,
+          [{ resize: { width: step.width } }],
+          {
+            base64: true,
+            compress: step.compress,
+            format: ImageManipulator.SaveFormat.JPEG,
+          }
+        );
+
+        if (image?.base64) {
+          dataUrl = `data:image/jpeg;base64,${image.base64}`;
+        }
+
+        if (dataUrl && dataUrl.length <= MAX_IMAGE_DATA_URL_LENGTH) {
+          break;
+        }
+      }
+
+      if (!image?.uri || !dataUrl) {
         Alert.alert("Image", "Could not prepare this image. Try another photo.");
         return;
       }
 
-      setSelectedImage({
-        uri: image.uri,
-        name: `${Date.now()}-product.jpg`,
-        type: "image/jpeg",
-        dataUrl: `data:image/jpeg;base64,${image.base64}`,
-      });
+      imageDataUrlRef.current = dataUrl;
       setRemoveImage(false);
-      setImageUrl(image.uri);
+      setImageUrl(dataUrl);
+      setImageStatus(`Image ready: ${Math.ceil(dataUrl.length / 1024)} KB. Save product to upload.`);
+      Alert.alert("Image ready", "Now press Save product to upload it.");
     } catch (error) {
       Alert.alert("Image", "Could not prepare this image. Try another photo.");
     } finally {
@@ -278,13 +302,15 @@ export default function AdminProductFormScreen({ navigation, route }) {
                 disabled={imageProcessing || loading}
                 onPress={() => {
                   setImageUrl("");
-                  setSelectedImage(null);
+                  imageDataUrlRef.current = "";
+                  setImageStatus("Image will be removed when you save.");
                   setRemoveImage(true);
                 }}
                 style={styles.imageAction}
               />
             ) : null}
           </View>
+          {imageStatus ? <Text style={styles.imageStatus}>{imageStatus}</Text> : null}
         </View>
         <View style={styles.switchCard}>
           <View>
@@ -366,6 +392,11 @@ const styles = StyleSheet.create({
   },
   imageAction: {
     flex: 1,
+  },
+  imageStatus: {
+    color: Colors.secondary,
+    fontSize: 12,
+    fontWeight: "800",
   },
   switchCard: {
     borderRadius: Radius.md,
