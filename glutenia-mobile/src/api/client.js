@@ -46,7 +46,7 @@ const request = async (path, options = {}) => {
   const isFormData =
     body &&
     typeof body.append === "function" &&
-    Object.prototype.toString.call(body) === "[object FormData]";
+    typeof body.getParts === "function";
   const headers = {
     ...(isFormData ? {} : { "Content-Type": "application/json" }),
     ...(rest.headers || {}),

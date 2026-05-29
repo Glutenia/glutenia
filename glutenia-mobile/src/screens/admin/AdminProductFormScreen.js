@@ -97,6 +97,10 @@ export default function AdminProductFormScreen({ navigation, route }) {
         body.imageUrl = "";
       }
 
+      if (selectedImage?.dataUrl) {
+        body.imageUrl = selectedImage.dataUrl;
+      }
+
       const savedProduct = productId
         ? await api.updateProduct(token, productId, body)
         : await api.createProduct(token, body);
@@ -107,7 +111,13 @@ export default function AdminProductFormScreen({ navigation, route }) {
           throw new Error("Product saved, but the server did not return its id.");
         }
 
-        await api.uploadProductImage(token, savedProductId, selectedImage);
+        try {
+          await api.uploadProductImage(token, savedProductId, selectedImage);
+        } catch (imageError) {
+          if (!selectedImage.dataUrl) {
+            throw imageError;
+          }
+        }
       }
 
       navigation.goBack();
@@ -146,14 +156,15 @@ export default function AdminProductFormScreen({ navigation, route }) {
       setImageProcessing(true);
       const image = await ImageManipulator.manipulateAsync(
         asset.uri,
-        [{ resize: { width: 900 } }],
+        [{ resize: { width: 720 } }],
         {
-          compress: 0.55,
+          base64: true,
+          compress: 0.42,
           format: ImageManipulator.SaveFormat.JPEG,
         }
       );
 
-      if (!image.uri) {
+      if (!image.uri || !image.base64) {
         Alert.alert("Image", "Could not prepare this image. Try another photo.");
         return;
       }
@@ -162,6 +173,7 @@ export default function AdminProductFormScreen({ navigation, route }) {
         uri: image.uri,
         name: `${Date.now()}-product.jpg`,
         type: "image/jpeg",
+        dataUrl: `data:image/jpeg;base64,${image.base64}`,
       });
       setRemoveImage(false);
       setImageUrl(image.uri);
