@@ -19,6 +19,9 @@
       "package": "com.glutenia.mobile",
       "versionCode": 2,
       "jsEngine": "jsc",
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F8F5F0"
