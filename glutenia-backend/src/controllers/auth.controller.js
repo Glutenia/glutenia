@@ -1,14 +1,9 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { getJwtExpiresIn, getJwtSecret } = require("../config/auth");
 const User = require("../models/User");
 
 const createToken = (user) => {
-  if (!process.env.JWT_SECRET) {
-    const error = new Error("JWT_SECRET is not configured");
-    error.statusCode = 500;
-    throw error;
-  }
-
   return jwt.sign(
     {
       id: user._id.toString(),
@@ -16,8 +11,8 @@ const createToken = (user) => {
       email: user.email,
       role: user.role,
     },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
+    getJwtSecret(),
+    { expiresIn: getJwtExpiresIn() }
   );
 };
 
