@@ -244,6 +244,7 @@ Expected values:
 NODE_ENV=development
 PORT=5000
 MONGO_URI=mongodb://127.0.0.1:27017/glutenia
+MONGO_DB_NAME=glutenia
 TEST_MONGO_URI=mongodb://127.0.0.1:27017/glutenia_test
 JWT_SECRET=replace_with_a_long_random_secret
 JWT_EXPIRES_IN=7d
@@ -251,6 +252,8 @@ CORS_ORIGIN=
 ```
 
 Never publish real secrets from `.env`.
+
+For MongoDB Atlas or MongoDB Compass URIs that do not include `/glutenia`, `MONGO_DB_NAME=glutenia` tells Mongoose which database to use.
 
 ### Backend Commands
 

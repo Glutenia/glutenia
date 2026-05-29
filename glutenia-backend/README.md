@@ -13,6 +13,14 @@ npm run dev
 
 The API starts on `http://localhost:5000` by default.
 
+For MongoDB Atlas or MongoDB Compass connection strings that do not include a database path, set:
+
+```env
+MONGO_DB_NAME=glutenia
+```
+
+That keeps the app data in the `glutenia` database.
+
 On Windows, you can use the runner instead:
 
 ```powershell

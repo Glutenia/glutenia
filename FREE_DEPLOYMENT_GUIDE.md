@@ -43,10 +43,12 @@ That allows any server to connect if it has the database username/password. It i
 It should look like:
 
 ```text
-mongodb+srv://USERNAME:PASSWORD@cluster-name.mongodb.net/glutenia?retryWrites=true&w=majority
+mongodb+srv://USERNAME:PASSWORD@cluster-name.mongodb.net/?retryWrites=true&w=majority&appName=glutenia
 ```
 
 Replace `USERNAME`, `PASSWORD`, and the cluster host with your real values.
+
+The backend uses `MONGO_DB_NAME=glutenia`, so it still writes to the `glutenia` database even if Atlas or MongoDB Compass gives you a URI with no `/glutenia` path.
 
 ## Step 2: Put Project On GitHub
 
@@ -74,6 +76,18 @@ git branch -M main
 git push -u origin main
 ```
 
+For this repo, the remote is already:
+
+```text
+https://github.com/Glutenia/glutenia.git
+```
+
+So the important command is:
+
+```powershell
+git push -u origin main
+```
+
 Do not commit real `.env` secrets. The `.gitignore` now protects them.
 
 ## Step 3: Deploy Backend On Render Free
@@ -85,14 +99,15 @@ Do not commit real `.env` secrets. The `.gitignore` now protects them.
 
 ```text
 MONGO_URI=your MongoDB Atlas connection string
+MONGO_DB_NAME=glutenia
 JWT_SECRET=a long random secret
 JWT_EXPIRES_IN=7d
 NODE_ENV=production
-PORT=5000
 CORS_ORIGIN=
 ```
 
 Render may generate `JWT_SECRET` automatically because `render.yaml` asks it to.
+Render supplies `PORT` automatically.
 
 5. Deploy.
 
@@ -185,6 +200,7 @@ MongoDB Atlas free M0 is enough for demos, school projects, and light testing. I
 
 - MongoDB Atlas free cluster created.
 - Atlas `MONGO_URI` copied.
+- Render `MONGO_DB_NAME=glutenia` set.
 - Project pushed to GitHub.
 - Render service deployed.
 - Render health URL works.
