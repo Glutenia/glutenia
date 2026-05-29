@@ -18,7 +18,7 @@ export const AuthProvider = ({ children }) => {
         if (saved) {
           const session = JSON.parse(saved);
           if (session.token) {
-            const freshUser = await api.me(session.token);
+            const freshUser = await api.me(session.token, { timeoutMs: 8000 });
             const nextSession = { ...session, user: freshUser };
             setUser(nextSession.user);
             setToken(nextSession.token);
@@ -27,7 +27,9 @@ export const AuthProvider = ({ children }) => {
         }
       } catch (error) {
         await AsyncStorage.removeItem(STORAGE_KEY);
-        Alert.alert("Session expired", "Please log in again.");
+        if (error.status !== 0) {
+          Alert.alert("Session expired", "Please log in again.");
+        }
       } finally {
         setLoading(false);
       }

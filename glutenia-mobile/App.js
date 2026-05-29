@@ -10,12 +10,12 @@ import AppErrorBoundary from "./src/components/AppErrorBoundary";
 import { Colors } from "./src/theme/colors";
 
 export default function App() {
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     ...Ionicons.font,
     ...MaterialCommunityIcons.font,
   });
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded && !fontError) {
     return (
       <View
         style={{

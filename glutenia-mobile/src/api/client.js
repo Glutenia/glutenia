@@ -2,6 +2,7 @@ import Constants from "expo-constants";
 import { Platform } from "react-native";
 
 const trimTrailingSlash = (value) => value.replace(/\/+$/, "");
+const DEFAULT_TIMEOUT_MS = 20000;
 
 const getHostFromExpo = () => {
   const hostUri =
@@ -39,7 +40,9 @@ export const getApiBaseUrl = () => {
 };
 
 const request = async (path, options = {}) => {
-  const { token, body, ...rest } = options;
+  const { token, body, timeoutMs = DEFAULT_TIMEOUT_MS, ...rest } = options;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   const headers = {
     "Content-Type": "application/json",
     ...(rest.headers || {}),
@@ -49,11 +52,25 @@ const request = async (path, options = {}) => {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${getApiBaseUrl()}${path}`, {
-    ...rest,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  let response;
+  try {
+    response = await fetch(`${getApiBaseUrl()}${path}`, {
+      ...rest,
+      headers,
+      signal: controller.signal,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  } catch (error) {
+    const requestError = new Error(
+      error.name === "AbortError"
+        ? "Server is taking too long to respond. Try again in a moment."
+        : "Could not reach the server. Check your connection and try again."
+    );
+    requestError.status = 0;
+    throw requestError;
+  } finally {
+    clearTimeout(timeout);
+  }
 
   const payload = await response.json().catch(() => ({
     success: false,
@@ -72,7 +89,7 @@ const request = async (path, options = {}) => {
 export const api = {
   login: (body) => request("/auth/login", { method: "POST", body }),
   register: (body) => request("/auth/register", { method: "POST", body }),
-  me: (token) => request("/auth/me", { token }),
+  me: (token, options = {}) => request("/auth/me", { token, ...options }),
   products: (params = {}) => {
     const query = new URLSearchParams(
       Object.entries(params).filter(([, value]) => value)
